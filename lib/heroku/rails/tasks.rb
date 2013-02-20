@@ -28,6 +28,10 @@ namespace :heroku do
     HEROKU_RUNNER.system_with_echo(*args)
   end
 
+  def heroku_git_rev
+    `git branch`.scan(/^\* (.*)\n/).flatten.first.to_s
+  end
+
   desc 'Add git remotes for all apps in this project'
   task :remotes => :all do
     HEROKU_RUNNER.each_heroku_app do |heroku_env, app_name, repo|
@@ -64,7 +68,7 @@ namespace :heroku do
 
       rake_cmd = HEROKU_CONFIG.rake_cmd(heroku_env)
 
-      branch = `git branch`.scan(/^\* (.*)\n/).flatten.first.to_s
+      branch = heroku_git_rev
       if branch.present?
         @git_push_arguments ||= []
         system_with_echo "git push #{repo} #{@git_push_arguments.join(' ')} #{branch}:master && #{rake_cmd} --app #{app_name} db:migrate && heroku restart --app #{app_name}"
